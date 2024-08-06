@@ -14,6 +14,7 @@ export default function Home() {
     if (userPrompt === '') return;
     
     setUserPrompt('')
+
     setMessages((messages) => [...messages, { role : 'user', content : userPrompt }, {role: 'assistant', content: ''}]);
 
     const response = await fetch('/api/chat', {
@@ -66,7 +67,6 @@ export default function Home() {
           <Button variant={'contained'} color={'primary'} onClick={sendPrompt}>Send</Button>
         </Stack>
       </Stack>
-
     </Box>
 
   );

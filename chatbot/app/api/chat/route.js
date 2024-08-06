@@ -38,12 +38,53 @@ export async function POST(req)
       })
  
     const completion = await openai.chat.completions.create({
-    model: "meta-llama/llama-3.1-8b-instruct:free",
+    model: "mistralai/mistral-7b-instruct:free",
     messages: [
         { role: "system", content: sysPrompt }, 
         ...data ],
+    stream: true, 
     })
 
-    console.log();
-    return NextResponse.json({message: completion.choices[0].message.content}, {status: 200} )
+    const encoder = new TextEncoder(); 
+
+    const stream = new ReadableStream({
+        async start(controller){
+            try {
+                for await (const chunk of completion)
+                {
+                    const content = chunk.choices[0]?.delta?.content
+                    
+                    if (content)
+                    {
+                        controller.enqueue(encoder.encode(content))   
+                    }
+                }
+            }
+            catch (err)
+            {
+                controller.error(err)
+            }
+            finally
+            {
+                controller.close()
+            }
+        }
+    })
+
+    return new NextResponse(stream)
 } 
+
+
+export async function GET(req) {
+
+    const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
+      },
+    });
+  
+    const data = await response.json();
+  
+    return NextResponse.json(data);
+  }
